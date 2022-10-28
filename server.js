@@ -560,7 +560,7 @@ app.post('/postView', (req, res) => {
 
 //  console.log(values)
  //SQL 코드
- const sql = "Select bloodType, bloodKind, patientName, hospital, phonNum, requestB, responseB, title, content, nickName From post Where postkey = ?"
+ const sql = "Select bloodType, bloodKind, patientName, hospital, phonNum, requestB, responseB, title, content, nickName, registNum From post Where postkey = ?"
  db.query(sql, values,
      (err, result) => {
       // console.log(sql)
@@ -675,3 +675,108 @@ app.post('/search',(req, res) => {
     });
 });
 
+//스크랩 하기
+app.post('/scrap', (req, res) => {
+  //파라미터를 받아오는 부분
+  let postkey = req.query.postkey; 
+  let email = req.query.email;
+  let nickName = req.query.nickName;
+  
+  let values = [postkey, email, nickName]
+
+  
+  //SQL 코드
+  const sql = "INSERT INTO scrap2(postkey,email, nickName) VALUES(?, ? ,?)"
+  db.query(sql, values,
+      (err, result) => {
+          if (err) {
+              console.log(err);
+              res.send("1");
+          }
+          else
+              res.send("0");
+      });
+});
+
+//스크랩 확인
+app.post('/scrapCheck', (req, res) => {
+  //파라미터를 받아오는 부분
+  let postkey = req.query.postkey; 
+  let email = req.query.email;
+  let nickName = req.query.nickName;
+  
+  let values = [postkey, email, nickName]
+
+  console.log("스크랩 체크")
+  
+  //SQL 코드
+  const sql = "Select * From scrap2 Where postkey = ? AND email = ? AND nickName = ?"
+  db.query(sql, values,
+    (err, result, fields) => {
+      if (err)
+          console.log(err);
+      if(result.length === 0) {
+        res.send('0'); // 중복검사에 성공하면 0을, 실패하면 1을 반환
+        console.log("0")
+      }else {
+        res.send('1');
+        console.log("1")
+      }
+  });
+});
+
+//스크랩 삭제
+app.post('/scrapDelete', (req, res) => {
+  //파라미터를 받아오는 부분
+  let postkey = req.query.postkey; 
+  let email = req.query.email;
+  let nickName = req.query.nickName;
+  
+  let values = [postkey, email, nickName]
+
+  console.log(values)
+  
+  //SQL 코드
+  const sql = "DELETE FROM scrap2 WHERE postkey = ? AND email = ? AND nickName = ?"
+  db.query(sql, values,
+      (err, result) => {
+          if (err)
+              console.log(err);
+          else
+              res.send(result);
+      });
+ });
+
+
+ //마이페이지 내 게시글 리스트
+app.post('/myPost',(req, res) => {
+  let email = req.query.email;
+  let values = [email]
+
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Where email = ? Order By postkey DESC"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(result)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});
+
+ //마이페이지 내 스크랩 리스트
+ app.post('/myScrap',(req, res) => {
+  let email = req.query.email;
+  let values = [email]
+  const sql= "Select post.postkey, post.bloodType, post.bloodKind, post.patientName, post.hospital, post.requestB, post.responseB, post.title, post.postDate From post Join scrap2 ON post.postkey = scrap2.postkey Where scrap2.email = ? Order By postkey DESC"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(sql)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});

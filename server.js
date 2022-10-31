@@ -329,8 +329,7 @@ app.post('/logout', function(req, res) {
 });
 
 
-//게시글 등록
-app.post('/post', (req, res) => {
+app.post("/post", (req, res) => {
   //파라미터를 받아오는 부분
   let nickName = req.query.nickName; // 게시글 작성자
   let bloodType = req.query.bloodType; // 혈액형
@@ -344,22 +343,51 @@ app.post('/post', (req, res) => {
   let title = req.query.title; // 게시글 제목
   let content = req.query.content; // 게시글 내용
   let email = req.query.email;
-  
-  let values = [nickName, bloodType, bloodKind, patientName,
-    registNum,hospital, 
-    phonNum, requestB, responseB, title, content, email]
 
-  console.log(values)
-  
+  let values = [
+    nickName,
+    bloodType,
+    bloodKind,
+    patientName,
+    registNum,
+    hospital,
+    phonNum,
+    requestB,
+    responseB,
+    title,
+    content,
+    email,
+  ];
+
+  //console.log(values);
+
   //SQL 코드
-  const sql = "INSERT INTO post(nickName, bloodType, bloodKind, patientName,registNum, hospital, phonNum, requestB, responseB, title, content, email) VALUES(?, ? ,?, ?, ?, ?, ?, ? ,?, ?, ?, ?)"
-  db.query(sql, values,
-      (err, result) => {
-          if (err)
-              console.log(err);
-          else
-              res.send(result);
-      });
+  const sql =
+    "INSERT INTO post(nickName, bloodType, bloodKind, patientName,registNum, hospital, phonNum, requestB, responseB, title, content, email) VALUES(?, ? ,?, ?, ?, ?, ?, ? ,?, ?, ?, ?)";
+  db.query(sql, values, (err, insertResult) => {
+    console.log(insertResult);
+    //게시글의 혈액형을 가진 회원들의 email 가져오는 쿼리
+    const emailsql = "select email from joinuser where blood=? AND push = 'true'";
+    db.query(emailsql, bloodType, (err, result) => {
+      if (err) console.log(err);
+      else {
+        axios
+          .get("http://localhost:3001/email", {
+            params: {
+              emails: result.map((row) => {
+                return row.email;
+              }),
+              postKey: insertResult.insertId, //insert 쿼리의 결과의 객체에 insertId라는 키값이 있음
+            },
+          })
+          .then((response) => {
+            //console.log(response);
+          });
+      }
+    });
+    if (err) console.log(err);
+    else res.send(insertResult);
+  });
 });
 
 
@@ -483,10 +511,10 @@ app.post('/userPw', (req, res) => {
 
 //게시글 리스트 만들 때 보여야 할 것들 반환
 app.post('/postList',(req, res) => {
-  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Order By postkey DESC"
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute  From post Order By postkey DESC"
   db.query(sql,
     (err, result) => {
-    //  console.log(result)
+     console.log(result)
         if (err)
             console.log(err);
         else
@@ -497,7 +525,7 @@ app.post('/postList',(req, res) => {
 
 //A형 게시글 리스트
 app.post('/bloodA',(req, res) => {
-  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Where bloodType = 'A' OR bloodType = 'A-' Order By postkey DESC"
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where bloodType = 'A' OR bloodType = 'A-' Order By postkey DESC"
   db.query(sql, 
     (err, result) => {
      console.log(result)
@@ -511,7 +539,7 @@ app.post('/bloodA',(req, res) => {
 
 //B형 게시글 리스트
 app.post('/bloodB',(req, res) => {
-  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Where bloodType = 'B' OR bloodType = 'B-' Order By postkey DESC"
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where bloodType = 'B' OR bloodType = 'B-' Order By postkey DESC"
   db.query(sql, 
     (err, result) => {
      console.log(result)
@@ -525,7 +553,7 @@ app.post('/bloodB',(req, res) => {
 
 //O형 게시글 리스트
 app.post('/bloodO',(req, res) => {
-  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Where bloodType = 'O' OR bloodType = 'O-' Order By postkey DESC"
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where bloodType = 'O' OR bloodType = 'O-' Order By postkey DESC"
   db.query(sql, 
     (err, result) => {
      console.log(result)
@@ -539,7 +567,7 @@ app.post('/bloodO',(req, res) => {
 
 //AB형 게시글 리스트
 app.post('/bloodAB',(req, res) => {
-  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Where bloodType = 'AB' OR bloodType = 'AB-' Order By postkey DESC"
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where bloodType = 'AB' OR bloodType = 'AB-' Order By postkey DESC"
   db.query(sql, 
     (err, result) => {
      console.log(result)
@@ -560,7 +588,7 @@ app.post('/postView', (req, res) => {
 
 //  console.log(values)
  //SQL 코드
- const sql = "Select bloodType, bloodKind, patientName, hospital, phonNum, requestB, responseB, title, content, nickName, registNum From post Where postkey = ?"
+ const sql = "Select bloodType, bloodKind, patientName, hospital, phonNum, requestB, responseB, title, content, nickName, registNum, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where postkey = ?"
  db.query(sql, values,
      (err, result) => {
       // console.log(sql)
@@ -621,7 +649,7 @@ app.post('/replyShow', function(req, res) {
   let values = [postkey] 
   console.log(values)
   //SQL 코드
-  const sql = "Select * From reply WHERE postkey = ?"
+  const sql = "Select email, nickName, replyContent, year(replyDate) as year, month(replyDate) as month, day(replyDate) as day, hour(replyDate) as hour, minute(replyDate) as minute  From reply WHERE postkey = ?"
   db.query(sql, values,
     (err, result) => {
       console.log(result)
@@ -663,7 +691,7 @@ app.post('/search',(req, res) => {
   let search = req.query.search;
 
   let values = [search, search]
-  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Where title Like ? OR patientName like ? Order By postkey DESC"
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where title Like ? OR patientName like ? Order By postkey DESC"
   db.query(sql, values,
     (err, result) => {
      console.log(result)
@@ -753,7 +781,7 @@ app.post('/myPost',(req, res) => {
   let email = req.query.email;
   let values = [email]
 
-  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, postDate From post Where email = ? Order By postkey DESC"
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where email = ? Order By postkey DESC"
   db.query(sql, values,
     (err, result) => {
      console.log(result)
@@ -769,7 +797,7 @@ app.post('/myPost',(req, res) => {
  app.post('/myScrap',(req, res) => {
   let email = req.query.email;
   let values = [email]
-  const sql= "Select post.postkey, post.bloodType, post.bloodKind, post.patientName, post.hospital, post.requestB, post.responseB, post.title, post.postDate From post Join scrap2 ON post.postkey = scrap2.postkey Where scrap2.email = ? Order By postkey DESC"
+  const sql= "Select post.postkey, post.bloodType, post.bloodKind, post.patientName, post.hospital, post.requestB, post.responseB, post.title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Join scrap2 ON post.postkey = scrap2.postkey Where scrap2.email = ? Order By postkey DESC"
   db.query(sql, values,
     (err, result) => {
      console.log(sql)
@@ -781,4 +809,212 @@ app.post('/myPost',(req, res) => {
     });
 });
 
-//깃허브 테스트
+ //마이페이지 내 댓글 리스트
+ app.post('/myReply',(req, res) => {
+  let email = req.query.email;
+  let values = [email]
+  const sql= "Select DISTINCT  post.postkey, post.bloodType, post.bloodKind, post.patientName, post.hospital, post.requestB, post.responseB, post.title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Join reply ON post.postkey = reply.postkey Where reply.email = ? Order By postkey DESC"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(sql)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});
+
+
+//헌혈증서 입력 하기
+app.post('/certificate', (req, res) => {
+  //파라미터를 받아오는 부분
+  let bloodNum = req.query.bloodNum;
+  let bloodNum2 = req.query.bloodNum2;
+  let bloodNum3 = req.query.bloodNum3;
+  let bloodNum4 = req.query.bloodNum4;
+  let email = req.query.email;
+  let bloodType = req.query.bloodType; 
+  let bloodKind = req.query.bloodKind; 
+  let hospital = req.query.hospital; 
+  let bloodDate = req.query.bloodDate; 
+
+  let values = [bloodNum, bloodNum2, bloodNum3, bloodNum4, email, bloodType, bloodKind, hospital, bloodDate]
+
+  
+  //SQL 코드
+  const sql = "INSERT INTO certificate(bloodNum, bloodNum2, bloodNum3, bloodNum4, email, bloodType, bloodKind, hospital, bloodDate) VALUES(?, ? ,?, ?, ?, ?, ?, ?, ?)"
+  db.query(sql, values,
+      (err, result) => {
+          if (err) {
+              console.log(err);
+              res.send("1");
+          }
+          else
+              res.send("0"); //헌혈증서 등록에 성공했다면 1을 반환
+      });
+});
+
+
+//헌혈증서 등록시 받은 수량 1증가
+app.post('/responsePlus', (req, res) => {
+  //파라미터를 받아오는 부분
+ let postkey = req.query.postkey;
+
+ let values = [postkey]
+
+ console.log(values)
+ //SQL 코드
+ const sql = "UPDATE post SET responseB = responseB+1 Where postkey = ?"
+ db.query(sql, values,
+     (err, result) => {
+      console.log(sql)
+         if (err)
+             console.log(err);
+         else
+             res.send(result);
+     });
+});
+
+
+// 게시글 검색 A
+app.post('/searchA',(req, res) => {
+  let search = req.query.search;
+
+  let values = [search, search]
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where (bloodType = 'A' OR bloodType = 'A-') AND (title Like ? OR patientName like ?) Order By postkey DESC"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(result)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});
+
+// 게시글 검색 B
+app.post('/searchB',(req, res) => {
+  let search = req.query.search;
+
+  let values = [search, search]
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where (bloodType = 'B' OR bloodType = 'B-') AND (title Like ? OR patientName like ?)  Order By postkey DESC"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(result)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});
+
+// 게시글 검색 AB
+app.post('/searchAB',(req, res) => {
+  let search = req.query.search;
+
+  let values = [search, search]
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where (bloodType = 'AB' OR bloodType = 'AB-') AND (title Like ? OR patientName like ?) Order By postkey DESC"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(result)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});
+
+// 게시글 검색 O
+app.post('/searchO',(req, res) => {
+  let search = req.query.search;
+
+  let values = [search, search]
+  const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where (bloodType = 'O' OR bloodType = 'O-') AND (title Like ? OR patientName like ?) Order By postkey DESC"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(result)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});
+
+// 마이페이지 내 헌혈 상황
+app.post('/Myblood',(req, res) => {
+  let email = req.query.email;
+
+  let values = [email]
+  const sql= "select COUNT(CASE WHEN bloodKind='전혈' THEN 1 END) AS one, COUNT(CASE WHEN bloodKind='성분채혈 혈소판' THEN 2 END) AS two, COUNT(CASE WHEN bloodKind='혈장' THEN 3 END) AS three, COUNT(CASE WHEN bloodKind='농축적혈구' THEN 4 END) AS four, COUNT(CASE WHEN bloodKind='성분채혈 백혈구' THEN 5 END) AS five, COUNT(CASE WHEN bloodKind='백혈구여과제거적혈구' THEN 6 END) AS six From certificate Where email = ?"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(result)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
+});
+
+//비밀번호 찾기
+app.post("/findPassword", (req, res) => {
+  const randomBytes = require("crypto").randomBytes(3);
+  const number = parseInt(randomBytes.toString("hex"), 16);
+  console.log(number);
+  const search = req.query.email;
+  console.log(search);
+  const emailsql = "SELECT EMAIL FROM JOINUSER";
+  db.query(emailsql, (err, result) => {
+    console.log(result);
+    const is = result.reduce((accumulator, curOb) => {
+      if (curOb.EMAIL === search) {
+        axios({
+          method: "POST",
+          url: "https://api.emailjs.com/api/v1.0/email/send",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          data: {
+            service_id: "service_tzwp6m8",
+            template_id: "template_zgxzu37",
+            user_id: "C1MRgJAEshwlNYlB_",
+            accessToken: "P96u_pz-h5XviRqJd-Q0Z",
+            template_params: {
+              from_name: "지정헌혈",
+              toEmail: search,
+              newPassword: number,
+            },
+          },
+        })
+          .then((result) => {
+            const pw = crypto
+              .createHash("sha512")
+              .update(number + "")
+              .digest("base64");
+            const values = [pw, search];
+            const sql = "UPDATE JOINUSER SET PW = ? WHERE EMAIL = ?";
+
+            db.query(sql, values, (err, result) => {
+              //console.log(result);
+              if (err) console.log(err);
+            });
+          })
+          .catch(function (error) {
+            console.log(error);
+          });
+        return accumulator + 1;
+      } else {
+        return accumulator;
+      }
+    }, 0);
+    console.log(is);
+    if (err) console.log(err);
+    res.send({ result: is });
+  });
+});

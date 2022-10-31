@@ -1,7 +1,7 @@
 const axios = require("axios");
 const qs = require("qs");
 const nodeGeocoder = require("node-geocoder");
-const cors = require('cors');
+const cors = require("cors");
 
 var express = require("express");
 var router = express.Router();
@@ -10,7 +10,7 @@ var router = express.Router();
 router.get("/", function (req, res, next) {
   res.render("index", { title: "Express" });
 });
-
+//kosis통계(테스트용)
 router.get("/api", function (req, res) {
   axios
     .get(
@@ -23,32 +23,37 @@ router.get("/api", function (req, res) {
       console.log(error);
     });
 });
-
+//지정헌혈 email 보내기
 router.get("/email", async function (req, res) {
-  axios({
-    method: "POST",
-    url: "https://api.emailjs.com/api/v1.0/email/send",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    data: {
-      service_id: "service_tzwp6m8",
-      template_id: "template_hrccsla",
-      user_id: "C1MRgJAEshwlNYlB_",
-      accessToken: "P96u_pz-h5XviRqJd-Q0Z",
-      template_params: {
-        from_name: "지정헌혈",
-        email: "oksdfn@gmail.com",
-        link: "http://localhost:3000/Post",
+  console.log("이메일 쿼리");
+  console.log(req.query.emails);
+  res.status(200).json({ result: "이메일 보냄" });
+  req.query.emails.forEach((email) => {
+    axios({
+      method: "POST",
+      url: "https://api.emailjs.com/api/v1.0/email/send",
+      headers: {
+        "Content-Type": "application/json",
       },
-    },
-  })
-    .then((result) => {
-      res.status(200).json({ 결과: "성공" });
+      data: {
+        service_id: "service_tzwp6m8",
+        template_id: "template_hrccsla",
+        user_id: "C1MRgJAEshwlNYlB_",
+        accessToken: "P96u_pz-h5XviRqJd-Q0Z",
+        template_params: {
+          from_name: "지정헌혈",
+          email: email,
+          link: `http://localhost:3000/BoardView${req.query.postKey}`,
+        },
+      },
     })
-    .catch(function (error) {
-      console.log(error);
-    });
+      .then((result) => {
+        console.log(email + "로 이메일 보냄");
+      })
+      .catch(function (error) {
+        console.log("이메일 보내기 실패");
+      });
+  });
 });
 
 //헌혈의집 데이터 응답
@@ -128,7 +133,7 @@ router.get("/blooddata", async function (req, res) {
     });
   } else {
     const locs = await geocodingjson(blooddata[req.query.req]);
-    console.log(locs)
+    console.log(locs);
     res.status(200).json(locs);
   }
 });

@@ -649,7 +649,7 @@ app.post('/replyShow', function(req, res) {
   let values = [postkey] 
   console.log(values)
   //SQL 코드
-  const sql = "Select email, nickName, replyContent, year(replyDate) as year, month(replyDate) as month, day(replyDate) as day, hour(replyDate) as hour, minute(replyDate) as minute  From reply WHERE postkey = ?"
+  const sql = "Select email, nickName, replyContent, replyType, bloodType, bloodKind, hospital, bloodDate, year(replyDate) as year, month(replyDate) as month, day(replyDate) as day, hour(replyDate) as hour, minute(replyDate) as minute  From reply WHERE postkey = ?"
   db.query(sql, values,
     (err, result) => {
       console.log(result)
@@ -668,13 +668,42 @@ app.post('/reply', (req, res) => {
   let email = req.query.email;
   let nickName = req.query.nickName;
   let replyContent = req.query.replyContent;
+  let replyType = req.query.replyType;
   
-  let values = [postkey, email, nickName, replyContent]
+  let values = [postkey, email, nickName, replyContent, replyType]
 
   console.log(values)
   
   //SQL 코드
-  const sql = "INSERT INTO reply(postkey,email, nickName, replyContent) VALUES(?, ? ,?, ?)"
+  const sql = "INSERT INTO reply(postkey,email, nickName, replyContent, replyType) VALUES(?, ? ,?, ?, ?)"
+  db.query(sql, values,
+      (err, result) => {
+          if (err) {
+              console.log(err);
+              res.send("1");
+          }
+          else
+              res.send("0");
+      });
+});
+
+//헌혈증서 완료 댓글 달기
+app.post('/reply2', (req, res) => {
+  //파라미터를 받아오는 부분
+  let postkey = req.query.postkey; 
+  let email = req.query.email;
+  let nickName = req.query.nickName;
+  let replyContent = req.query.replyContent;
+  let bloodType = req.query.bloodType; 
+  let bloodKind = req.query.bloodKind; 
+  let hospital = req.query.hospital; 
+  let bloodDate = req.query.bloodDate; 
+  let values = [postkey, email, nickName, replyContent, bloodType, bloodKind, hospital, bloodDate]
+
+  console.log(values)
+  
+  //SQL 코드
+  const sql = "INSERT INTO reply(postkey,email, nickName, replyContent, bloodType, bloodKind, hospital, bloodDate) VALUES(?, ? ,?, ?, ?, ?, ?, ?)"
   db.query(sql, values,
       (err, result) => {
           if (err) {
@@ -834,16 +863,17 @@ app.post('/certificate', (req, res) => {
   let bloodNum3 = req.query.bloodNum3;
   let bloodNum4 = req.query.bloodNum4;
   let email = req.query.email;
+  let nickName = req.query.nickName;
   let bloodType = req.query.bloodType; 
   let bloodKind = req.query.bloodKind; 
   let hospital = req.query.hospital; 
   let bloodDate = req.query.bloodDate; 
 
-  let values = [bloodNum, bloodNum2, bloodNum3, bloodNum4, email, bloodType, bloodKind, hospital, bloodDate]
+  let values = [bloodNum, bloodNum2, bloodNum3, bloodNum4, email, nickName, bloodType, bloodKind, hospital, bloodDate]
 
   
   //SQL 코드
-  const sql = "INSERT INTO certificate(bloodNum, bloodNum2, bloodNum3, bloodNum4, email, bloodType, bloodKind, hospital, bloodDate) VALUES(?, ? ,?, ?, ?, ?, ?, ?, ?)"
+  const sql = "INSERT INTO certificate(bloodNum, bloodNum2, bloodNum3, bloodNum4, email, nickName, bloodType, bloodKind, hospital, bloodDate) VALUES(?, ? ,?, ?, ?, ?, ?, ?, ?, ?)"
   db.query(sql, values,
       (err, result) => {
           if (err) {

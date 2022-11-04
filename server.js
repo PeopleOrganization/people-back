@@ -31,10 +31,10 @@ app.use(express.static(__dirname));
 
 // sql 연동
 const db = mysql.createConnection({
-    user: 'root',
-    host: 'localhost',
-    password: '1234',
-    database: 'minje'
+    user: 'people',
+    host: 'awseb-e-vj5pexrasv-stack-awsebrdsdatabase-lprvp3o1hbyu.c2k4cktruffj.ap-northeast-2.rds.amazonaws.com',
+    password: 'ks29850850',
+    database: 'people'
 });
 
 
@@ -43,6 +43,7 @@ var sessionStore = new MySQLStore(db);
 
 // var cors = require('cors');
 app.use(cors());
+
 app.use("/", indexRouter);
 // app.use(cors({
 //   origin: true, // 출처 허용 옵션
@@ -367,12 +368,12 @@ app.post("/post", (req, res) => {
   db.query(sql, values, (err, insertResult) => {
     console.log(insertResult);
     //게시글의 혈액형을 가진 회원들의 email 가져오는 쿼리
-    const emailsql = "select email from joinuser where blood=? AND push = 'true'";
+    const emailsql = "select email from joinUser where blood=? AND push = 'true'";
     db.query(emailsql, bloodType, (err, result) => {
       if (err) console.log(err);
       else {
         axios
-          .get("http://localhost:3001/email", {
+          .get("http://people-env.eba-35362bbh.ap-northeast-2.elasticbeanstalk.com:3001/email", {
             params: {
               emails: result.map((row) => {
                 return row.email;
@@ -450,7 +451,7 @@ app.post('/userInfo', (req, res) => {
 
  console.log(values)
  //SQL 코드
- const sql = "Select * From joinuser Where email = ?"
+ const sql = "Select * From joinUser Where email = ?"
  db.query(sql, values,
      (err, result) => {
       console.log(result)
@@ -528,7 +529,7 @@ app.post('/bloodA',(req, res) => {
   const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where bloodType = 'A' OR bloodType = 'A-' Order By postkey DESC"
   db.query(sql, 
     (err, result) => {
-     console.log(result)
+     console.log(sql)
         if (err)
             console.log(err);
         else
@@ -858,6 +859,7 @@ app.post('/myPost',(req, res) => {
 //헌혈증서 입력 하기
 app.post('/certificate', (req, res) => {
   //파라미터를 받아오는 부분
+  let postkey = req.query.postkey;
   let bloodNum = req.query.bloodNum;
   let bloodNum2 = req.query.bloodNum2;
   let bloodNum3 = req.query.bloodNum3;
@@ -869,13 +871,14 @@ app.post('/certificate', (req, res) => {
   let hospital = req.query.hospital; 
   let bloodDate = req.query.bloodDate; 
 
-  let values = [bloodNum, bloodNum2, bloodNum3, bloodNum4, email, nickName, bloodType, bloodKind, hospital, bloodDate]
+  let values = [postkey, bloodNum, bloodNum2, bloodNum3, bloodNum4, email, nickName, bloodType, bloodKind, hospital, bloodDate]
 
   
   //SQL 코드
-  const sql = "INSERT INTO certificate(bloodNum, bloodNum2, bloodNum3, bloodNum4, email, nickName, bloodType, bloodKind, hospital, bloodDate) VALUES(?, ? ,?, ?, ?, ?, ?, ?, ?, ?)"
+  const sql = "INSERT INTO certificate(postkey, bloodNum, bloodNum2, bloodNum3, bloodNum4, email, nickName, bloodType, bloodKind, hospital, bloodDate) VALUES(?, ? ,?, ?, ?, ?, ?, ?, ?, ?, ?)"
   db.query(sql, values,
       (err, result) => {
+        console.log(sql)
           if (err) {
               console.log(err);
               res.send("1");
@@ -915,7 +918,7 @@ app.post('/searchA',(req, res) => {
   const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where (bloodType = 'A' OR bloodType = 'A-') AND (title Like ? OR patientName like ?) Order By postkey DESC"
   db.query(sql, values,
     (err, result) => {
-     console.log(result)
+     console.log(sql)
         if (err)
             console.log(err);
         else
@@ -932,7 +935,7 @@ app.post('/searchB',(req, res) => {
   const sql= "Select postkey, bloodType, bloodKind, patientName, hospital, requestB, responseB, title, year(postDate) as year, month(postDate) as month, day(postDate) as day, hour(postDate) as hour, minute(postDate) as minute From post Where (bloodType = 'B' OR bloodType = 'B-') AND (title Like ? OR patientName like ?)  Order By postkey DESC"
   db.query(sql, values,
     (err, result) => {
-     console.log(result)
+     console.log(sql)
         if (err)
             console.log(err);
         else
@@ -999,11 +1002,11 @@ app.post("/findPassword", (req, res) => {
   console.log(number);
   const search = req.query.email;
   console.log(search);
-  const emailsql = "SELECT EMAIL FROM JOINUSER";
+  const emailsql = "Select email From joinUser";
   db.query(emailsql, (err, result) => {
     console.log(result);
     const is = result.reduce((accumulator, curOb) => {
-      if (curOb.EMAIL === search) {
+      if (curOb.email === search) {
         axios({
           method: "POST",
           url: "https://api.emailjs.com/api/v1.0/email/send",
@@ -1028,7 +1031,7 @@ app.post("/findPassword", (req, res) => {
               .update(number + "")
               .digest("base64");
             const values = [pw, search];
-            const sql = "UPDATE JOINUSER SET PW = ? WHERE EMAIL = ?";
+            const sql = "UPDATE joinUser SET pw = ? WHERE email = ?";
 
             db.query(sql, values, (err, result) => {
               //console.log(result);
@@ -1047,4 +1050,22 @@ app.post("/findPassword", (req, res) => {
     if (err) console.log(err);
     res.send({ result: is });
   });
+});
+
+
+// 게시글 작성자 시점 헌혈증서 목록
+app.post('/certificateShow',(req, res) => {
+  let postkey = req.query.postkey;
+
+  let values = [postkey]
+  const sql= "Select * From certificate Where postkey = ?"
+  db.query(sql, values,
+    (err, result) => {
+     console.log(sql)
+        if (err)
+            console.log(err);
+        else
+        console.log(result);
+        res.send(result);
+    });
 });

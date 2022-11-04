@@ -43,7 +43,7 @@ router.get("/email", async function (req, res) {
         template_params: {
           from_name: "지정헌혈",
           email: email,
-          link: `http://localhost:3000/BoardView${req.query.postKey}`,
+          link: `http://people-donate.surge.sh/BoardView${req.query.postKey}`,
         },
       },
     })
@@ -128,7 +128,7 @@ router.get("/blooddata", async function (req, res) {
   };
   console.log(req.query.req);
   if (req.query.req === "house") {
-    await axios.get("http://localhost:3001/bloodhouse").then((response) => {
+    await axios.get("http://people-env.eba-35362bbh.ap-northeast-2.elasticbeanstalk.com:3001/bloodhouse").then((response) => {
       res.status(200).json(response.data);
     });
   } else {
